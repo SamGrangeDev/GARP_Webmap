@@ -1,5 +1,5 @@
 ol.proj.proj4.register(proj4);
-//ol.proj.get("EPSG:3857").setExtent([15233566.680914, -4278433.839671, 15702899.139122, -4040508.357385]);
+//ol.proj.get("EPSG:3857").setExtent([15224763.147997, -4277737.899730, 15676277.022171, -4048845.449629]);
 var wms_layers = [];
 
 
@@ -99,23 +99,36 @@ var lyr_FutureGreenfieldSupplyinEFPA_6 = new ol.layer.Vector({
                 interactive: true,
                 title: '<img src="styles/legend/FutureGreenfieldSupplyinEFPA_6.png" /> Future Greenfield Supply in EFPA'
             });
-var format_FutureGreenfieldSupplyTwoWells_7 = new ol.format.GeoJSON();
-var features_FutureGreenfieldSupplyTwoWells_7 = format_FutureGreenfieldSupplyTwoWells_7.readFeatures(json_FutureGreenfieldSupplyTwoWells_7, 
+var lyr_Land_Ownersunique_7 = new ol.layer.Image({
+                            opacity: 1,
+                            title: "Land_Owners(unique)",
+                            
+                            
+                            source: new ol.source.ImageStatic({
+                               url: "./layers/Land_Ownersunique_7.png",
+    attributions: ' ',
+                                projection: 'EPSG:3857',
+                                alwaysInRange: true,
+                                imageExtent: [15413845.153183, -4107379.134130, 15420767.568274, -4102674.753848]
+                            })
+                        });
+var format_FutureGreenfieldSupplyTwoWells_8 = new ol.format.GeoJSON();
+var features_FutureGreenfieldSupplyTwoWells_8 = format_FutureGreenfieldSupplyTwoWells_8.readFeatures(json_FutureGreenfieldSupplyTwoWells_8, 
             {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
-var jsonSource_FutureGreenfieldSupplyTwoWells_7 = new ol.source.Vector({
+var jsonSource_FutureGreenfieldSupplyTwoWells_8 = new ol.source.Vector({
     attributions: ' ',
 });
-jsonSource_FutureGreenfieldSupplyTwoWells_7.addFeatures(features_FutureGreenfieldSupplyTwoWells_7);
-var lyr_FutureGreenfieldSupplyTwoWells_7 = new ol.layer.Vector({
+jsonSource_FutureGreenfieldSupplyTwoWells_8.addFeatures(features_FutureGreenfieldSupplyTwoWells_8);
+var lyr_FutureGreenfieldSupplyTwoWells_8 = new ol.layer.Vector({
                 declutter: false,
-                source:jsonSource_FutureGreenfieldSupplyTwoWells_7, 
-                style: style_FutureGreenfieldSupplyTwoWells_7,
+                source:jsonSource_FutureGreenfieldSupplyTwoWells_8, 
+                style: style_FutureGreenfieldSupplyTwoWells_8,
                 popuplayertitle: "Future Greenfield Supply - Two Wells",
                 interactive: true,
-                title: '<img src="styles/legend/FutureGreenfieldSupplyTwoWells_7.png" /> Future Greenfield Supply - Two Wells'
+                title: '<img src="styles/legend/FutureGreenfieldSupplyTwoWells_8.png" /> Future Greenfield Supply - Two Wells'
             });
 var group_FutureGreenfield = new ol.layer.Group({
-                                layers: [lyr_FutureGreenfieldSupplyoutsideEFPA_5,lyr_FutureGreenfieldSupplyinEFPA_6,lyr_FutureGreenfieldSupplyTwoWells_7,],
+                                layers: [lyr_FutureGreenfieldSupplyoutsideEFPA_5,lyr_FutureGreenfieldSupplyinEFPA_6,lyr_Land_Ownersunique_7,lyr_FutureGreenfieldSupplyTwoWells_8,],
                                 fold: "open",
                                 title: "Future Greenfield"});
 var group_RegionalPlan = new ol.layer.Group({
@@ -127,23 +140,23 @@ var group_BaseLayer = new ol.layer.Group({
                                 fold: "open",
                                 title: "Base Layer"});
 
-lyr_GoogleMaps_0.setVisible(false);lyr_ESRISatelliteArcGISWorld_Imagery_1.setVisible(true);lyr_GARPLGA_2.setVisible(true);lyr_GreaterAdelaidePlanningRegion_3.setVisible(true);lyr_GARP_Vision_Map_4.setVisible(false);lyr_FutureGreenfieldSupplyoutsideEFPA_5.setVisible(false);lyr_FutureGreenfieldSupplyinEFPA_6.setVisible(false);lyr_FutureGreenfieldSupplyTwoWells_7.setVisible(true);
+lyr_GoogleMaps_0.setVisible(false);lyr_ESRISatelliteArcGISWorld_Imagery_1.setVisible(true);lyr_GARPLGA_2.setVisible(true);lyr_GreaterAdelaidePlanningRegion_3.setVisible(true);lyr_GARP_Vision_Map_4.setVisible(false);lyr_FutureGreenfieldSupplyoutsideEFPA_5.setVisible(false);lyr_FutureGreenfieldSupplyinEFPA_6.setVisible(false);lyr_Land_Ownersunique_7.setVisible(true);lyr_FutureGreenfieldSupplyTwoWells_8.setVisible(true);
 var layersList = [group_BaseLayer,group_RegionalPlan,group_FutureGreenfield];
 lyr_GARPLGA_2.set('fieldAliases', {'fid': 'fid', 'LGA_CODE24': 'LGA_CODE24', 'LGA_NAME24': 'LGA_NAME24', 'STE_CODE21': 'STE_CODE21', 'STE_NAME21': 'STE_NAME21', 'AUS_CODE21': 'AUS_CODE21', 'AUS_NAME21': 'AUS_NAME21', 'AREASQKM': 'AREASQKM', 'LOCI_URI21': 'LOCI_URI21', });
 lyr_GreaterAdelaidePlanningRegion_3.set('fieldAliases', {'objectid': 'OBJECTID', 'region': 'region', 'st_area(shape)': 'st_area(shape)', 'st_perimeter(shape)': 'st_perimeter(shape)', });
 lyr_FutureGreenfieldSupplyoutsideEFPA_5.set('fieldAliases', {'planparcel': 'planparcel', 'Address': 'Address', 'Gross_HA': 'Gross_HA', 'Lead Link': 'Lead Link', 'Land Owner': 'Land Owner', 'Contact no': 'Contact no', 'Email': 'Email', });
 lyr_FutureGreenfieldSupplyinEFPA_6.set('fieldAliases', {'planparcel': 'planparcel', 'Address': 'Address', 'Lead Link': 'Lead Link', 'Land Owner': 'Land Owner', 'Contact no': 'Contact no', 'Email': 'Email', 'Company': 'Company', 'Gross_Ha': 'Gross_Ha', });
-lyr_FutureGreenfieldSupplyTwoWells_7.set('fieldAliases', {'fid': 'fid', 'planparcel': 'planparcel', 'Address': 'Address', 'Lead Link': 'Lead Link', 'Land Owner': 'Land Owner', 'Contact no': 'Contact no', 'Email': 'Email', 'Company': 'Company', 'Gross_Ha': 'Gross_Ha', 'Land Owner Unique': 'Land Owner Unique', });
+lyr_FutureGreenfieldSupplyTwoWells_8.set('fieldAliases', {'fid': 'fid', 'planparcel': 'planparcel', 'Address': 'Address', 'Lead Link': 'Lead Link', 'Land Owner': 'Land Owner', 'Contact no': 'Contact no', 'Email': 'Email', 'Company': 'Company', 'Gross_Ha': 'Gross_Ha', 'Land Owner Unique': 'Land Owner Unique', });
 lyr_GARPLGA_2.set('fieldImages', {'fid': 'TextEdit', 'LGA_CODE24': 'TextEdit', 'LGA_NAME24': 'TextEdit', 'STE_CODE21': 'TextEdit', 'STE_NAME21': 'TextEdit', 'AUS_CODE21': 'TextEdit', 'AUS_NAME21': 'TextEdit', 'AREASQKM': 'TextEdit', 'LOCI_URI21': 'TextEdit', });
 lyr_GreaterAdelaidePlanningRegion_3.set('fieldImages', {'objectid': 'TextEdit', 'region': 'TextEdit', 'st_area(shape)': 'TextEdit', 'st_perimeter(shape)': 'TextEdit', });
 lyr_FutureGreenfieldSupplyoutsideEFPA_5.set('fieldImages', {'planparcel': 'TextEdit', 'Address': 'TextEdit', 'Gross_HA': 'TextEdit', 'Lead Link': 'TextEdit', 'Land Owner': 'TextEdit', 'Contact no': 'TextEdit', 'Email': 'TextEdit', });
 lyr_FutureGreenfieldSupplyinEFPA_6.set('fieldImages', {'planparcel': 'TextEdit', 'Address': 'TextEdit', 'Lead Link': 'TextEdit', 'Land Owner': 'TextEdit', 'Contact no': 'TextEdit', 'Email': 'TextEdit', 'Company': 'TextEdit', 'Gross_Ha': 'TextEdit', });
-lyr_FutureGreenfieldSupplyTwoWells_7.set('fieldImages', {'fid': 'TextEdit', 'planparcel': 'TextEdit', 'Address': 'TextEdit', 'Lead Link': 'TextEdit', 'Land Owner': 'TextEdit', 'Contact no': 'TextEdit', 'Email': 'TextEdit', 'Company': 'TextEdit', 'Gross_Ha': 'TextEdit', 'Land Owner Unique': 'TextEdit', });
+lyr_FutureGreenfieldSupplyTwoWells_8.set('fieldImages', {'fid': 'TextEdit', 'planparcel': 'TextEdit', 'Address': 'TextEdit', 'Lead Link': 'TextEdit', 'Land Owner': 'TextEdit', 'Contact no': 'TextEdit', 'Email': 'TextEdit', 'Company': 'TextEdit', 'Gross_Ha': 'TextEdit', 'Land Owner Unique': 'TextEdit', });
 lyr_GARPLGA_2.set('fieldLabels', {'fid': 'inline label - always visible', 'LGA_CODE24': 'inline label - always visible', 'LGA_NAME24': 'inline label - always visible', 'STE_CODE21': 'inline label - always visible', 'STE_NAME21': 'inline label - always visible', 'AUS_CODE21': 'inline label - always visible', 'AUS_NAME21': 'inline label - always visible', 'AREASQKM': 'inline label - always visible', 'LOCI_URI21': 'inline label - always visible', });
 lyr_GreaterAdelaidePlanningRegion_3.set('fieldLabels', {'objectid': 'no label', 'region': 'no label', 'st_area(shape)': 'no label', 'st_perimeter(shape)': 'no label', });
 lyr_FutureGreenfieldSupplyoutsideEFPA_5.set('fieldLabels', {'planparcel': 'inline label - always visible', 'Address': 'inline label - always visible', 'Gross_HA': 'inline label - always visible', 'Lead Link': 'inline label - always visible', 'Land Owner': 'inline label - always visible', 'Contact no': 'inline label - always visible', 'Email': 'inline label - always visible', });
 lyr_FutureGreenfieldSupplyinEFPA_6.set('fieldLabels', {'planparcel': 'inline label - always visible', 'Address': 'inline label - always visible', 'Lead Link': 'inline label - visible with data', 'Land Owner': 'inline label - always visible', 'Contact no': 'inline label - always visible', 'Email': 'inline label - always visible', 'Company': 'inline label - always visible', 'Gross_Ha': 'inline label - always visible', });
-lyr_FutureGreenfieldSupplyTwoWells_7.set('fieldLabels', {'fid': 'hidden field', 'planparcel': 'inline label - visible with data', 'Address': 'inline label - visible with data', 'Lead Link': 'inline label - visible with data', 'Land Owner': 'inline label - visible with data', 'Contact no': 'inline label - visible with data', 'Email': 'inline label - visible with data', 'Company': 'inline label - visible with data', 'Gross_Ha': 'inline label - visible with data', 'Land Owner Unique': 'hidden field', });
-lyr_FutureGreenfieldSupplyTwoWells_7.on('precompose', function(evt) {
+lyr_FutureGreenfieldSupplyTwoWells_8.set('fieldLabels', {'fid': 'hidden field', 'planparcel': 'inline label - visible with data', 'Address': 'inline label - visible with data', 'Lead Link': 'inline label - visible with data', 'Land Owner': 'inline label - visible with data', 'Contact no': 'inline label - visible with data', 'Email': 'inline label - visible with data', 'Company': 'inline label - visible with data', 'Gross_Ha': 'inline label - visible with data', 'Land Owner Unique': 'hidden field', });
+lyr_FutureGreenfieldSupplyTwoWells_8.on('precompose', function(evt) {
     evt.context.globalCompositeOperation = 'normal';
 });
