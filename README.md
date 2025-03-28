@@ -1,2 +1,0 @@
-# GARP_Webmap
- webmap

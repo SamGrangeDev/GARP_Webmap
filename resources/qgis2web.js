@@ -9,7 +9,7 @@ var map = new ol.Map({
 });
 
 //initial view - epsg:3857 coordinates if not "Match project CRS"
-map.getView().fit([15314645.796361, -4276029.380054, 15617808.827730, -4021691.153170], map.getSize());
+map.getView().fit([15292658.728034, -4259696.494705, 15622577.536664, -4049043.133440], map.getSize());
 
 ////small screen definition
     var hasTouchScreen = map.getViewport().classList.contains('ol-touch');
@@ -112,7 +112,7 @@ var featureOverlay = new ol.layer.Vector({
     updateWhileInteracting: true // optional, for instant visual feedback
 });
 
-var doHighlight = false;
+var doHighlight = true;
 var doHover = false;
 
 function createPopupField(currentFeature, currentFeatureKeys, layer) {
@@ -169,7 +169,6 @@ function onPointerMove(evt) {
     }
     var pixel = map.getEventPixel(evt.originalEvent);
     var coord = evt.coordinate;
-    var popupField;
     var currentFeature;
     var currentLayer;
     var currentFeatureKeys;
@@ -190,7 +189,6 @@ function onPointerMove(evt) {
             if (clusteredFeatures) {
 				clusterLength = clusteredFeatures.length;
 			}
-            var clusterFeature;
             if (typeof clusteredFeatures !== "undefined") {
                 if (doPopup) {
                     for(var n=0; n<clusteredFeatures.length; n++) {
@@ -314,7 +312,6 @@ function onSingleClickFeatures(evt) {
     }
     var pixel = map.getEventPixel(evt.originalEvent);
     var coord = evt.coordinate;
-    var popupField;
     var currentFeature;
     var currentFeatureKeys;
     var clusteredFeatures;
@@ -433,11 +430,92 @@ var bottomRightContainerDiv = document.getElementById('bottom-right-container')
 
 //title
 
+var Title = new ol.control.Control({
+    element: (() => {
+        var titleElement = document.createElement('div');
+        titleElement.className = 'top-left-title ol-control';
+        titleElement.innerHTML = '<h2 class="project-title">GARP Map</h2>';
+        return titleElement;
+    })(),
+    target: 'top-left-container'
+});
+map.addControl(Title)
+    
 //abstract
 
 
 //geolocate
 
+isTracking = false;
+var geolocateControl = (function (Control) {
+    geolocateControl = function(opt_options) {
+        var options = opt_options || {};
+        var button = document.createElement('button');
+        button.className += ' fa fa-map-marker';
+        var handleGeolocate = function() {
+            if (isTracking) {
+                map.removeLayer(geolocateOverlay);
+                isTracking = false;
+          } else if (geolocation.getTracking()) {
+                map.addLayer(geolocateOverlay);
+                map.getView().setCenter(geolocation.getPosition());
+                isTracking = true;
+          }
+        };
+        button.addEventListener('click', handleGeolocate, false);
+        button.addEventListener('touchstart', handleGeolocate, false);
+        var element = document.createElement('div');
+        element.className = 'geolocate ol-unselectable ol-control';
+        element.appendChild(button);
+        ol.control.Control.call(this, {
+            element: element,
+            target: options.target
+        });
+    };
+    if (Control) geolocateControl.__proto__ = Control;
+    geolocateControl.prototype = Object.create(Control && Control.prototype);
+    geolocateControl.prototype.constructor = geolocateControl;
+    return geolocateControl;
+}(ol.control.Control));
+map.addControl(new geolocateControl())
+
+      var geolocation = new ol.Geolocation({
+  projection: map.getView().getProjection()
+});
+
+
+var accuracyFeature = new ol.Feature();
+geolocation.on('change:accuracyGeometry', function() {
+  accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
+});
+
+var positionFeature = new ol.Feature();
+positionFeature.setStyle(new ol.style.Style({
+  image: new ol.style.Circle({
+    radius: 6,
+    fill: new ol.style.Fill({
+      color: '#3399CC'
+    }),
+    stroke: new ol.style.Stroke({
+      color: '#fff',
+      width: 2
+    })
+  })
+}));
+
+geolocation.on('change:position', function() {
+  var coordinates = geolocation.getPosition();
+  positionFeature.setGeometry(coordinates ?
+      new ol.geom.Point(coordinates) : null);
+});
+
+var geolocateOverlay = new ol.layer.Vector({
+  source: new ol.source.Vector({
+    features: [accuracyFeature, positionFeature]
+  })
+});
+
+geolocation.setTracking(true);
 
 
 //measurement
@@ -828,6 +906,16 @@ if (elementToMove && parentElement) {
 
 //geocoder
 
+var geocoder = new Geocoder('nominatim', {
+  provider: 'osm',
+  lang: 'en-US',
+  placeholder: 'Search place or address ...',
+  limit: 5,
+  keepOpen: true,
+});
+map.addControl(geocoder);
+document.getElementsByClassName('gcd-gl-btn')[0].className += ' fa fa-search';
+
 
 //layer search
 
@@ -869,11 +957,14 @@ map.addControl(bottomAttribution);
 
 var attributionList = document.createElement('li');
 attributionList.innerHTML = `
-	<a href="https://github.com/tomchadwin/qgis2web">qgis2web</a> &middot;
+	<a href="https://github.com/qgis2web/qgis2web">qgis2web</a> &middot;
 	<a href="https://openlayers.org/">OpenLayers</a> &middot;
 	<a href="https://qgis.org/">QGIS</a>	
 `;
-bottomAttribution.element.appendChild(attributionList);
+var bottomAttributionUl = bottomAttribution.element.querySelector('ul');
+if (bottomAttributionUl) {
+  bottomAttribution.element.insertBefore(attributionList, bottomAttributionUl);
+}
 
 
 // Disable "popup on hover" or "highlight on hover" if ol-control mouseover
