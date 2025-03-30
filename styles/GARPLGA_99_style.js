@@ -8,10 +8,10 @@ var style_GARPLGA_99 = function(feature, resolution){
     };
     
     var labelText = ""; var value = feature.get("");
-    var labelFont = "9.1px \'Open Sans SemiBold\', sans-serif";
+    var labelFont = "13.0px \'Open Sans SemiBold\', sans-serif";
     var labelFill = "#ffffff";
     var bufferColor = "#fa0004";
-    var bufferWidth = 1.0;
+    var bufferWidth = 2.5000000000000013;
     var textAlign = "left";
     var offsetX = 0;
     var offsetY = 0;
