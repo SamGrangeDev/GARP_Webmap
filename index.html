@@ -1,19 +1,23 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="./resources/ol.css">
-        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
-        <link href="resources/ol-geocoder.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
-        <link rel="stylesheet" href="./resources/qgis2web.css">
-        <style>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="./resources/ol.css">
+    <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+    <link href="resources/ol-geocoder.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+    <link rel="stylesheet" href="./resources/qgis2web.css">
+    <style>
         html, body {
             background-color: #ffffff;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
         }
         .ol-control > * {
             background-color: #f8f8f8!important;
@@ -32,35 +36,562 @@
         .ol-control {
             background-color: rgba(255,255,255,.4) !important;
             padding: 2px !important;
-        } 
-        </style>
-
-        <style>
+        }
+        #search-container, #dual-search-container {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            width: 350px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+        }
+        #dual-search-container {
+            width: 500px;
+            display: none;
+            gap: 10px;
+        }
+        #search-container input, #dual-search-container input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        #route-button {
+            padding: 8px 12px;
+            margin-left: 5px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #route-button:hover {
+            background-color: #0056b3;
+        }
+        #destination-button {
+            padding: 8px 12px;
+            margin-left: 5px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #destination-button:hover {
+            background-color: #1e7e34;
+        }
+        #destination-button i {
+            pointer-events: none;
+        }
+        .ol-popup {
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            min-width: 180px;
+            display: none;
+            z-index: 1000;
+        }
+        .ol-popup:after, .ol-popup:before {
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+        .ol-popup:after {
+            border-top-color: white;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -10px;
+        }
+        .ol-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            font-weight: bold;
+            color: #aaa;
+        }
+        .ol-popup-closer:hover {
+            color: #000;
+        }
+        #eta-popup {
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            min-width: 180px;
+            display: none;
+            z-index: 1000;
+        }
+        #eta-popup:after, #eta-popup:before {
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+            bottom: -15px;
+            left: 55%;
+            transform: translateX(-50%);
+        }
+        #eta-popup:after {
+            border-top-color: white;
+            border-width: 10px;
+        }
+        #eta-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+        }
+        #eta-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            font-weight: bold;
+            color: #aaa;
+        }
+        #eta-popup-closer:hover {
+            color: #000;
+        }
+        #eta-popup-content {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+        #street-view-panorama {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 400px;
+            z-index: 1003;
+            background: #fff;
+            display: none;
+            border-top: 4px solid #FAF9F6;
+            box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        #close-street-view {
+            position: absolute;
+            bottom: 420px;
+            left: 10px;
+            z-index: 1004;
+            padding: 8px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+        #close-street-view:hover {
+            background-color: #c82333;
+        }
+        #street-view-icon {
+            position: fixed !important;
+            top: 850px !important;
+            left: 20px !important;
+            z-index: 1002 !important;
+            cursor: grab !important;
+            width: 40px !important;
+            height: 40px !important;
+            transition: transform 0.03s ease;
+            transform: translate(0px, 0px);
+        }
+        #street-view-icon.dragging {
+            cursor: grabbing;
+            opacity: 0.8;
+        }
+        #gmap-coverage {
+            pointer-events: none;
+        }
+        #gmap-coverage .gm-style > div:first-child {
+            opacity: 0 !important;
+        }
         html, body, #map {
+            overflow: hidden;
             width: 100%;
             height: 100%;
             padding: 0;
             margin: 0;
         }
-        </style>
-        <title>GARP Map</title>
-    </head>
-    <body>
-        <div id="map">
-            <div id="popup" class="ol-popup">
-                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-                <div id="popup-content"></div>
-            </div>
+        .popup {
+            font-family: "Aptos Narrow", sans-serif;
+            color: #333;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+        }
+        .popup .header {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+            line-height: 1.2;
+            color: #333;
+        }
+        .popup p {
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.2;
+            background: transparent;
+        }
+        .popup p strong {
+            font-size: 14px;
+        }
+        .popup table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 5px;
+            background: transparent;
+        }
+        .popup th, .popup td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+            font-size: 12px;
+            line-height: 1.2;
+            background: #fafafa;
+        }
+        .popup th {
+            background-color: #E08E5F;
+            color: #FFF;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .popup tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+    <title>GARP Map</title>
+</head>
+<body>
+    <div id="map">
+        <div id="search-container">
+            <input type="text" id="address-input" placeholder="Enter address">
+            <button id="destination-button" title="Set Destination">
+                <i class="fas fa-map-marker-alt"></i>
+            </button>
         </div>
-        <script src="resources/qgis2web_expressions.js"></script>
-        <script src="./resources/functions.js"></script>
-        <script src="./resources/ol.js"></script>
-        <script src="./resources/ol-layerswitcher.js"></script>
-        <script src="resources/ol-geocoder.js"></script>
-        <script src="layers/UrbanTransportRoutes_2.js"></script><script src="layers/FutureRoadWidening_3.js"></script><script src="layers/FutureLocalRoadWidening_4.js"></script><script src="layers/CharacterAreaOverlay_5.js"></script><script src="layers/AffordableHousing_6.js"></script><script src="layers/MajorUrbanTransportRoutes_7.js"></script><script src="layers/UrbanTreeCanopy_8.js"></script><script src="layers/TrafficGeneratingDevelopment_9.js"></script><script src="layers/StormwaterManagement_10.js"></script><script src="layers/StateSignificantNativeVegetation_11.js"></script><script src="layers/SignificantLandscapeProtection_12.js"></script><script src="layers/ScenicQuality_13.js"></script><script src="layers/RiverMurrayTributariesProtectionArea_14.js"></script><script src="layers/RiverMurrayFloodplainProtection_15.js"></script><script src="layers/RegulatedandSignificantTree_16.js"></script><script src="layers/RamsarWetlands_17.js"></script><script src="layers/PrescribedWellsArea_18.js"></script><script src="layers/PrescribedWatercourses_19.js"></script><script src="layers/PrescribedWaterResourcesArea_20.js"></script><script src="layers/PrescribedSurfaceWaterAreas_21.js"></script><script src="layers/NoiseandAirEmissions_22.js"></script><script src="layers/NativeVegetation_23.js"></script><script src="layers/MurrayDarlingBasin_24.js"></script><script src="layers/MountLoftyRangesCatchmentArea2_25.js"></script><script src="layers/MountLoftyRangesCatchmentArea1_26.js"></script><script src="layers/MarineParksRestrictedUse_27.js"></script><script src="layers/MarineParksManagedUse_28.js"></script><script src="layers/LocalHeritagePlace_29.js"></script><script src="layers/LimitedDwelling_30.js"></script><script src="layers/KeyOutbackandRuralRoutes_31.js"></script><script src="layers/InterfaceManagement_32.js"></script><script src="layers/HeritageAdjacency_33.js"></script><script src="layers/HazardsBushfireMediumRisk_34.js"></script><script src="layers/HazardsBushfireHighRisk_35.js"></script><script src="layers/HazardsBushfireGeneralRisk_36.js"></script><script src="layers/Gateway_37.js"></script><script src="layers/EnvironmentandFoodProductionArea_38.js"></script><script src="layers/DwellingExcision_39.js"></script><script src="layers/Design_40.js"></script><script src="layers/CharacterPreservationDistrict_41.js"></script><script src="layers/BuildingNearAirfields_42.js"></script><script src="layers/AirportBuildingHeightsRegulated_43.js"></script><script src="layers/AirportBuildingHeightsAircraftLandingArea_44.js"></script><script src="layers/AircraftNoiseExposure_45.js"></script><script src="layers/AdvertisingNearSignalisedIntersections_46.js"></script><script src="layers/SignificantInterfaceManagement_47.js"></script><script src="layers/ResourceExtractionProtectionArea_48.js"></script><script src="layers/LimitedLandDivision_49.js"></script><script src="layers/CoastalFlooding_50.js"></script><script src="layers/CoastalAreas_51.js"></script><script src="layers/AdelaideDolphinSanctuary_52.js"></script><script src="layers/TunnelProtection_53.js"></script><script src="layers/NonstopCorridor_54.js"></script><script src="layers/KeyRailwayCrossings_55.js"></script><script src="layers/GasandLiquidPetroleumPipelines_56.js"></script><script src="layers/GasandLiquidPetroleumPipelinesFacilities_57.js"></script><script src="layers/DefenceAviationArea_58.js"></script><script src="layers/StateHeritageArea_59.js"></script><script src="layers/StateHeritagePlace_60.js"></script><script src="layers/HistoricAreaOverlay_61.js"></script><script src="layers/HazardsFloodingHigh_62.js"></script><script src="layers/WaterProtectionArea_63.js"></script><script src="layers/HazardsAcidSulfateSoils_64.js"></script><script src="layers/ActivityZones_65.js"></script><script src="layers/CapitalCityZones_66.js"></script><script src="layers/EmploymentZones_67.js"></script><script src="layers/InfrastructureZones_68.js"></script><script src="layers/NaturalResourcesandEnvironmentZones_69.js"></script><script src="layers/NeighbourhoodandCorridorZones_70.js"></script><script src="layers/RuralZones_71.js"></script><script src="layers/TourismZones_72.js"></script><script src="layers/TownshipandSettlementZones_73.js"></script><script src="layers/AirportsandAirfields_74.js"></script><script src="layers/Seaport_75.js"></script><script src="layers/ExistingMajorTransportRoutes_76.js"></script><script src="layers/BusRoutesPublicTransport_77.js"></script><script src="layers/PotentialGreaterAdelaideFreightBypass_78.js"></script><script src="layers/ExistingRailwayCorridors_79.js"></script><script src="layers/TransportInvestigations_80.js"></script><script src="layers/NorthernParkLandsGreenCorridorLink_81.js"></script><script src="layers/LocalInfillInvestigationAreas_82.js"></script><script src="layers/StateSignificantInfillAreas_83.js"></script><script src="layers/FutureEmployment_84.js"></script><script src="layers/StateSignificantIndustrialEmploymentPrecinct_85.js"></script><script src="layers/NationalEmploymentEconomicCluster_86.js"></script><script src="layers/PrimeIndustrialEmploymentPrecinct_87.js"></script><script src="layers/StateInnovationPlaces_88.js"></script><script src="layers/FutureGreenfieldSupplyinEFPA_89.js"></script><script src="layers/FutureGreenfieldGrowthArea_90.js"></script><script src="layers/NorthernParkLands_91.js"></script><script src="layers/InterUrbanBreaks_92.js"></script><script src="layers/OpenSpaceNetworkGreenSpace_93.js"></script><script src="layers/OpenSpaceNetworkGreenways_94.js"></script><script src="layers/OpenSpaceNetworkGreenways2_95.js"></script><script src="layers/CharacterPreservationDistrict_96.js"></script><script src="layers/EnvironmentandFoodProductionArea_97.js"></script><script src="layers/HillsFaceZone_98.js"></script><script src="layers/GARPLGA_99.js"></script><script src="layers/Yankalilla_100.js"></script><script src="layers/WestTorrens_101.js"></script><script src="layers/Walkerville_102.js"></script><script src="layers/VictorHarbor_103.js"></script><script src="layers/Unley_104.js"></script><script src="layers/TeaTreeGully_105.js"></script><script src="layers/Salisbury_106.js"></script><script src="layers/Prospect_107.js"></script><script src="layers/PortAdelaideEnfield_108.js"></script><script src="layers/Playford_109.js"></script><script src="layers/Onkaparinga_110.js"></script><script src="layers/NorwoodPaynehamandStPeters_111.js"></script><script src="layers/MurrayBridge_112.js"></script><script src="layers/MountBarker_113.js"></script><script src="layers/Mitcham_114.js"></script><script src="layers/Marion_115.js"></script><script src="layers/Light_116.js"></script><script src="layers/HoldfastBay_117.js"></script><script src="layers/Gawler_118.js"></script><script src="layers/CharlesSturt_119.js"></script><script src="layers/CampbelltownSA_120.js"></script><script src="layers/Burnside_121.js"></script><script src="layers/Barossa_122.js"></script><script src="layers/Alexandrina_123.js"></script><script src="layers/AdelaidePlains_124.js"></script><script src="layers/AdelaideHills_125.js"></script><script src="layers/Adelaide_126.js"></script>
-        <script src="styles/UrbanTransportRoutes_2_style.js"></script><script src="styles/FutureRoadWidening_3_style.js"></script><script src="styles/FutureLocalRoadWidening_4_style.js"></script><script src="styles/CharacterAreaOverlay_5_style.js"></script><script src="styles/AffordableHousing_6_style.js"></script><script src="styles/MajorUrbanTransportRoutes_7_style.js"></script><script src="styles/UrbanTreeCanopy_8_style.js"></script><script src="styles/TrafficGeneratingDevelopment_9_style.js"></script><script src="styles/StormwaterManagement_10_style.js"></script><script src="styles/StateSignificantNativeVegetation_11_style.js"></script><script src="styles/SignificantLandscapeProtection_12_style.js"></script><script src="styles/ScenicQuality_13_style.js"></script><script src="styles/RiverMurrayTributariesProtectionArea_14_style.js"></script><script src="styles/RiverMurrayFloodplainProtection_15_style.js"></script><script src="styles/RegulatedandSignificantTree_16_style.js"></script><script src="styles/RamsarWetlands_17_style.js"></script><script src="styles/PrescribedWellsArea_18_style.js"></script><script src="styles/PrescribedWatercourses_19_style.js"></script><script src="styles/PrescribedWaterResourcesArea_20_style.js"></script><script src="styles/PrescribedSurfaceWaterAreas_21_style.js"></script><script src="styles/NoiseandAirEmissions_22_style.js"></script><script src="styles/NativeVegetation_23_style.js"></script><script src="styles/MurrayDarlingBasin_24_style.js"></script><script src="styles/MountLoftyRangesCatchmentArea2_25_style.js"></script><script src="styles/MountLoftyRangesCatchmentArea1_26_style.js"></script><script src="styles/MarineParksRestrictedUse_27_style.js"></script><script src="styles/MarineParksManagedUse_28_style.js"></script><script src="styles/LocalHeritagePlace_29_style.js"></script><script src="styles/LimitedDwelling_30_style.js"></script><script src="styles/KeyOutbackandRuralRoutes_31_style.js"></script><script src="styles/InterfaceManagement_32_style.js"></script><script src="styles/HeritageAdjacency_33_style.js"></script><script src="styles/HazardsBushfireMediumRisk_34_style.js"></script><script src="styles/HazardsBushfireHighRisk_35_style.js"></script><script src="styles/HazardsBushfireGeneralRisk_36_style.js"></script><script src="styles/Gateway_37_style.js"></script><script src="styles/EnvironmentandFoodProductionArea_38_style.js"></script><script src="styles/DwellingExcision_39_style.js"></script><script src="styles/Design_40_style.js"></script><script src="styles/CharacterPreservationDistrict_41_style.js"></script><script src="styles/BuildingNearAirfields_42_style.js"></script><script src="styles/AirportBuildingHeightsRegulated_43_style.js"></script><script src="styles/AirportBuildingHeightsAircraftLandingArea_44_style.js"></script><script src="styles/AircraftNoiseExposure_45_style.js"></script><script src="styles/AdvertisingNearSignalisedIntersections_46_style.js"></script><script src="styles/SignificantInterfaceManagement_47_style.js"></script><script src="styles/ResourceExtractionProtectionArea_48_style.js"></script><script src="styles/LimitedLandDivision_49_style.js"></script><script src="styles/CoastalFlooding_50_style.js"></script><script src="styles/CoastalAreas_51_style.js"></script><script src="styles/AdelaideDolphinSanctuary_52_style.js"></script><script src="styles/TunnelProtection_53_style.js"></script><script src="styles/NonstopCorridor_54_style.js"></script><script src="styles/KeyRailwayCrossings_55_style.js"></script><script src="styles/GasandLiquidPetroleumPipelines_56_style.js"></script><script src="styles/GasandLiquidPetroleumPipelinesFacilities_57_style.js"></script><script src="styles/DefenceAviationArea_58_style.js"></script><script src="styles/StateHeritageArea_59_style.js"></script><script src="styles/StateHeritagePlace_60_style.js"></script><script src="styles/HistoricAreaOverlay_61_style.js"></script><script src="styles/HazardsFloodingHigh_62_style.js"></script><script src="styles/WaterProtectionArea_63_style.js"></script><script src="styles/HazardsAcidSulfateSoils_64_style.js"></script><script src="styles/ActivityZones_65_style.js"></script><script src="styles/CapitalCityZones_66_style.js"></script><script src="styles/EmploymentZones_67_style.js"></script><script src="styles/InfrastructureZones_68_style.js"></script><script src="styles/NaturalResourcesandEnvironmentZones_69_style.js"></script><script src="styles/NeighbourhoodandCorridorZones_70_style.js"></script><script src="styles/RuralZones_71_style.js"></script><script src="styles/TourismZones_72_style.js"></script><script src="styles/TownshipandSettlementZones_73_style.js"></script><script src="styles/AirportsandAirfields_74_style.js"></script><script src="styles/Seaport_75_style.js"></script><script src="styles/ExistingMajorTransportRoutes_76_style.js"></script><script src="styles/BusRoutesPublicTransport_77_style.js"></script><script src="styles/PotentialGreaterAdelaideFreightBypass_78_style.js"></script><script src="styles/ExistingRailwayCorridors_79_style.js"></script><script src="styles/TransportInvestigations_80_style.js"></script><script src="styles/NorthernParkLandsGreenCorridorLink_81_style.js"></script><script src="styles/LocalInfillInvestigationAreas_82_style.js"></script><script src="styles/StateSignificantInfillAreas_83_style.js"></script><script src="styles/FutureEmployment_84_style.js"></script><script src="styles/StateSignificantIndustrialEmploymentPrecinct_85_style.js"></script><script src="styles/NationalEmploymentEconomicCluster_86_style.js"></script><script src="styles/PrimeIndustrialEmploymentPrecinct_87_style.js"></script><script src="styles/StateInnovationPlaces_88_style.js"></script><script src="styles/FutureGreenfieldSupplyinEFPA_89_style.js"></script><script src="styles/FutureGreenfieldGrowthArea_90_style.js"></script><script src="styles/NorthernParkLands_91_style.js"></script><script src="styles/InterUrbanBreaks_92_style.js"></script><script src="styles/OpenSpaceNetworkGreenSpace_93_style.js"></script><script src="styles/OpenSpaceNetworkGreenways_94_style.js"></script><script src="styles/OpenSpaceNetworkGreenways2_95_style.js"></script><script src="styles/CharacterPreservationDistrict_96_style.js"></script><script src="styles/EnvironmentandFoodProductionArea_97_style.js"></script><script src="styles/HillsFaceZone_98_style.js"></script><script src="styles/GARPLGA_99_style.js"></script><script src="styles/Yankalilla_100_style.js"></script><script src="styles/WestTorrens_101_style.js"></script><script src="styles/Walkerville_102_style.js"></script><script src="styles/VictorHarbor_103_style.js"></script><script src="styles/Unley_104_style.js"></script><script src="styles/TeaTreeGully_105_style.js"></script><script src="styles/Salisbury_106_style.js"></script><script src="styles/Prospect_107_style.js"></script><script src="styles/PortAdelaideEnfield_108_style.js"></script><script src="styles/Playford_109_style.js"></script><script src="styles/Onkaparinga_110_style.js"></script><script src="styles/NorwoodPaynehamandStPeters_111_style.js"></script><script src="styles/MurrayBridge_112_style.js"></script><script src="styles/MountBarker_113_style.js"></script><script src="styles/Mitcham_114_style.js"></script><script src="styles/Marion_115_style.js"></script><script src="styles/Light_116_style.js"></script><script src="styles/HoldfastBay_117_style.js"></script><script src="styles/Gawler_118_style.js"></script><script src="styles/CharlesSturt_119_style.js"></script><script src="styles/CampbelltownSA_120_style.js"></script><script src="styles/Burnside_121_style.js"></script><script src="styles/Barossa_122_style.js"></script><script src="styles/Alexandrina_123_style.js"></script><script src="styles/AdelaidePlains_124_style.js"></script><script src="styles/AdelaideHills_125_style.js"></script><script src="styles/Adelaide_126_style.js"></script>
-        <script src="./layers/layers.js" type="text/javascript"></script> 
-        <script src="./resources/Autolinker.min.js"></script>
-        <script src="./resources/qgis2web.js"></script>
-    </body>
+        <div id="dual-search-container">
+            <input type="text" id="origin-input" placeholder="Enter starting address">
+            <input type="text" id="destination-input" placeholder="Enter destination address">
+            <button id="route-button">Get Route</button>
+        </div>
+        <div id="popup" class="ol-popup">
+            <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+            <div id="popup-content"></div>
+        </div>
+        <div id="eta-popup" class="ol-popup">
+            <a href="#" id="eta-popup-closer" class="ol-popup-closer"></a>
+            <div id="eta-popup-content"></div>
+        </div>
+    </div>
+    <div id="street-view-panorama" style="width: 100%; height: 720px; display: none; position: absolute; bottom: 0; left: 0; z-index: 1003;"></div>
+    <button id="close-street-view" style="position: absolute; bottom: 680px; left: 46%; z-index: 1004; display: none;">Close Street View</button>
+    <div id="street-view-icon" title="Drag to Street View" style="position: absolute; top: 850px; left: 25px; z-index: 1002; cursor: grab;">
+        <img src="streetview/pegman.png" alt="Street View" width="40" height="40">
+    </div>
+    <div id="gmap-coverage" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; display:none; z-index:999;"></div>
+    <script>
+        window.initMap = function() {
+            if (typeof google === 'undefined') {
+                console.error('Google Maps JavaScript API not loaded.');
+                return;
+            }
+            initAutocomplete();
+            initRouting();
+            if (typeof initStreetView === 'function' && typeof map !== 'undefined') {
+                initStreetView();
+            } else {
+                setTimeout(() => {
+                    if (typeof initStreetView === 'function' && typeof map !== 'undefined') {
+                        initStreetView();
+                    }
+                }, 1000);
+            }
+        }
+
+        function initAutocomplete() {
+            const addressInput = document.getElementById('address-input');
+            const originInput = document.getElementById('origin-input');
+            const destinationInput = document.getElementById('destination-input');
+
+            const autocompleteSingle = new google.maps.places.Autocomplete(addressInput, {
+                componentRestrictions: { country: 'au' }
+            });
+
+            autocompleteSingle.addListener('place_changed', function() {
+                const place = autocompleteSingle.getPlace();
+                if (!place.geometry) {
+                    alert("No details available for input: '" + place.name + "'");
+                    return;
+                }
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                const olCoord = ol.proj.fromLonLat([lng, lat]);
+                map.getView().animate({
+                    center: olCoord,
+                    zoom: 15.3,
+                    duration: 2000
+                });
+                addMarker(olCoord, place.formatted_address);
+            });
+
+            const autocompleteOrigin = new google.maps.places.Autocomplete(originInput, {
+                componentRestrictions: { country: 'au' }
+            });
+
+            const autocompleteDestination = new google.maps.places.Autocomplete(destinationInput, {
+                componentRestrictions: { country: 'au' }
+            });
+        }
+
+        function addMarker(coordinate, address) {
+            const existingMarker = map.getOverlayById('search-marker');
+            if (existingMarker) {
+                map.removeOverlay(existingMarker);
+            }
+            const markerElement = document.createElement('div');
+            markerElement.className = 'search-marker';
+            markerElement.innerHTML = `<i class="fas fa-map-marker-alt" style="color: #FF0000; font-size: 30px;"></i>`;
+            const markerOverlay = new ol.Overlay({
+                position: coordinate,
+                positioning: 'center-center',
+                element: markerElement,
+                stopEvent: false,
+                id: 'search-marker'
+            });
+            map.addOverlay(markerOverlay);
+        }
+
+        let directionsLayer, startMarker, endMarker, etaPopup, endPopup;
+
+        function initRouting() {
+            document.getElementById('route-button').addEventListener('click', function() {
+                const origin = document.getElementById('origin-input').value;
+                const destination = document.getElementById('destination-input').value;
+                if (!origin || !destination) {
+                    alert('Please enter both origin and destination addresses.');
+                    return;
+                }
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ 'address': origin }, function(originResults, originStatus) {
+                    if (originStatus !== 'OK') {
+                        alert('Geocode was not successful for the origin: ' + originStatus);
+                        return;
+                    }
+                    const originLocation = originResults[0].geometry.location;
+                    geocoder.geocode({ 'address': destination }, function(destinationResults, destinationStatus) {
+                        if (destinationStatus !== 'OK') {
+                            alert('Geocode was not successful for the destination: ' + destinationStatus);
+                            return;
+                        }
+                        const destinationLocation = destinationResults[0].geometry.location;
+                        const directionsService = new google.maps.DirectionsService();
+                        directionsService.route({
+                            origin: originLocation,
+                            destination: destinationLocation,
+                            travelMode: 'DRIVING'
+                        }, function(response, status) {
+                            if (status === 'OK') {
+                                processDirections(response);
+                            } else {
+                                alert('Directions request failed due to ' + status);
+                            }
+                        });
+                    });
+                });
+            });
+        }
+
+        function processDirections(response) {
+            const route = response.routes[0].overview_polyline;
+            const path = google.maps.geometry.encoding.decodePath(route);
+            const olPath = path.map(function(latlng) {
+                return ol.proj.fromLonLat([latlng.lng(), latlng.lat()]);
+            });
+            if (directionsLayer) {
+                map.removeLayer(directionsLayer);
+            }
+            directionsLayer = new ol.layer.Vector({
+                source: new ol.source.Vector({
+                    features: [
+                        new ol.Feature({
+                            geometry: new ol.geom.LineString(olPath)
+                        })
+                    ]
+                }),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#00FFFF',
+                        width: 4
+                    })
+                })
+            });
+            map.addLayer(directionsLayer);
+            const legs = response.routes[0].legs;
+            let totalDistance = 0;
+            let totalDuration = 0;
+            legs.forEach(function(leg) {
+                totalDistance += leg.distance.value;
+                totalDuration += leg.duration.value;
+            });
+            const distanceKm = (totalDistance / 1000).toFixed(2);
+            const durationMin = Math.round(totalDuration / 60);
+            const etaInfoContent = `<strong>Route Information:</strong><br>Distance: ${distanceKm} km<br>ETA: ${durationMin} mins`;
+            document.getElementById('eta-popup-content').innerHTML = etaInfoContent;
+            const midpoint = olPath[Math.floor(olPath.length / 2)];
+            if (!etaPopup) {
+                etaPopup = new ol.Overlay({
+                    element: document.getElementById('eta-popup'),
+                    autoPan: { animation: { duration: 250 } },
+                });
+                map.addOverlay(etaPopup);
+            }
+            etaPopup.setPosition(midpoint);
+            document.getElementById('eta-popup').style.display = 'block';
+            document.getElementById('eta-popup-closer').onclick = function () {
+                etaPopup.setPosition(undefined);
+                document.getElementById('eta-popup').style.display = 'none';
+                return false;
+            };
+            const startLatLng = response.routes[0].legs[0].start_location;
+            const endLatLng = response.routes[0].legs[0].end_location;
+            const startPoint = ol.proj.fromLonLat([startLatLng.lng(), startLatLng.lat()]);
+            const endPoint = ol.proj.fromLonLat([endLatLng.lng(), endLatLng.lat()]);
+            if (startMarker) map.removeOverlay(startMarker);
+            startMarker = new ol.Overlay({
+                position: startPoint,
+                positioning: 'center-center',
+                element: document.createElement('div'),
+                stopEvent: false,
+            });
+            startMarker.getElement().style.width = '15px';
+            startMarker.getElement().style.height = '15px';
+            startMarker.getElement().style.borderRadius = '50%';
+            startMarker.getElement().style.backgroundColor = 'blue';
+            startMarker.getElement().style.border = '2px solid white';
+            map.addOverlay(startMarker);
+            if (endMarker) map.removeOverlay(endMarker);
+            endMarker = new ol.Overlay({
+                position: endPoint,
+                positioning: 'center-center',
+                element: document.createElement('div'),
+                stopEvent: false,
+            });
+            endMarker.getElement().style.width = '15px';
+            endMarker.getElement().style.height = '15px';
+            endMarker.getElement().style.borderRadius = '50%';
+            endMarker.getElement().style.backgroundColor = 'red';
+            endMarker.getElement().style.border = '2px solid white';
+            map.addOverlay(endMarker);
+            const extent = ol.extent.boundingExtent([startPoint, endPoint]);
+            map.getView().fit(extent, {
+                padding: [200, 200, 200, 200],
+                duration: 2000,
+            });
+            const endPopupContent = `<strong>Destination Address:</strong><br>${document.getElementById('destination-input').value}`;
+            if (endPopup) map.removeOverlay(endPopup);
+            endPopup = new ol.Overlay({
+                position: endPoint,
+                positioning: 'bottom-center',
+                element: document.createElement('div'),
+                stopEvent: false
+            });
+            endPopup.getElement().innerHTML = endPopupContent;
+            endPopup.getElement().style.backgroundColor = 'white';
+            endPopup.getElement().style.padding = '10px';
+            endPopup.getElement().style.borderRadius = '8px';
+            endPopup.getElement().style.border = '1px solid #cccccc';
+            endPopup.getElement().style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+            endPopup.getElement().style.minWidth = '180px';
+            endPopup.getElement().style.textAlign = 'center';
+            endPopup.getElement().style.fontSize = '14px';
+            endPopup.getElement().style.marginBottom = '15px';
+            map.addOverlay(endPopup);
+        }
+
+        document.getElementById('destination-button').addEventListener('click', function() {
+            document.getElementById('search-container').style.display = 'none';
+            document.getElementById('dual-search-container').style.display = 'flex';
+        });
+
+        const closeButton = document.createElement('button');
+        closeButton.innerHTML = 'Close';
+        closeButton.style.marginLeft = '10px';
+        closeButton.style.padding = '8px 12px';
+        closeButton.style.border = 'none';
+        closeButton.style.backgroundColor = '#6c757d';
+        closeButton.style.color = 'white';
+        closeButton.style.borderRadius = '4px';
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.fontSize = '14px';
+        closeButton.addEventListener('click', function() {
+            document.getElementById('dual-search-container').style.display = 'none';
+            document.getElementById('search-container').style.display = 'flex';
+            if (directionsLayer) {
+                map.removeLayer(directionsLayer);
+                directionsLayer = null;
+            }
+            if (startMarker) {
+                map.removeOverlay(startMarker);
+                startMarker = null;
+            }
+            if (endMarker) {
+                map.removeOverlay(endMarker);
+                endMarker = null;
+            }
+            if (etaPopup) {
+                etaPopup.setPosition(undefined);
+                document.getElementById('eta-popup').style.display = 'none';
+                etaPopup = null;
+            }
+            if (endPopup) {
+                map.removeOverlay(endPopup);
+                endPopup = null;
+            }
+        });
+        document.getElementById('dual-search-container').appendChild(closeButton);
+    </script>
+    <script loading="async" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9b66RtsjMvLfvEoyH9VtxSnqnbRRfnfc&libraries=places,geometry&callback=initMap"></script>
+    <script src="resources/qgis2web_expressions.js"></script>
+    <script src="./resources/functions.js"></script>
+    <script src="./resources/ol.js"></script>
+    <script src="./resources/ol-layerswitcher.js"></script>
+    <script src="resources/ol-geocoder.js"></script>
+    <script src="streetview/streetview.js"></script>
+    <script src="streetview/streethighlights.js"></script>
+    <script src="layers/UrbanTransportRoutes_2.js"></script><script src="layers/FutureRoadWidening_3.js"></script><script src="layers/FutureLocalRoadWidening_4.js"></script><script src="layers/CharacterAreaOverlay_5.js"></script><script src="layers/AffordableHousing_6.js"></script><script src="layers/MajorUrbanTransportRoutes_7.js"></script><script src="layers/UrbanTreeCanopy_8.js"></script><script src="layers/TrafficGeneratingDevelopment_9.js"></script><script src="layers/StormwaterManagement_10.js"></script><script src="layers/StateSignificantNativeVegetation_11.js"></script><script src="layers/SignificantLandscapeProtection_12.js"></script><script src="layers/ScenicQuality_13.js"></script><script src="layers/RiverMurrayTributariesProtectionArea_14.js"></script><script src="layers/RiverMurrayFloodplainProtection_15.js"></script><script src="layers/RegulatedandSignificantTree_16.js"></script><script src="layers/RamsarWetlands_17.js"></script><script src="layers/PrescribedWellsArea_18.js"></script><script src="layers/PrescribedWatercourses_19.js"></script><script src="layers/PrescribedWaterResourcesArea_20.js"></script><script src="layers/PrescribedSurfaceWaterAreas_21.js"></script><script src="layers/NoiseandAirEmissions_22.js"></script><script src="layers/NativeVegetation_23.js"></script><script src="layers/MurrayDarlingBasin_24.js"></script><script src="layers/MountLoftyRangesCatchmentArea2_25.js"></script><script src="layers/MountLoftyRangesCatchmentArea1_26.js"></script><script src="layers/MarineParksRestrictedUse_27.js"></script><script src="layers/MarineParksManagedUse_28.js"></script><script src="layers/LocalHeritagePlace_29.js"></script><script src="layers/LimitedDwelling_30.js"></script><script src="layers/KeyOutbackandRuralRoutes_31.js"></script><script src="layers/InterfaceManagement_32.js"></script><script src="layers/HeritageAdjacency_33.js"></script><script src="layers/HazardsBushfireMediumRisk_34.js"></script><script src="layers/HazardsBushfireHighRisk_35.js"></script><script src="layers/HazardsBushfireGeneralRisk_36.js"></script><script src="layers/Gateway_37.js"></script><script src="layers/EnvironmentandFoodProductionArea_38.js"></script><script src="layers/DwellingExcision_39.js"></script><script src="layers/Design_40.js"></script><script src="layers/CharacterPreservationDistrict_41.js"></script><script src="layers/BuildingNearAirfields_42.js"></script><script src="layers/AirportBuildingHeightsRegulated_43.js"></script><script src="layers/AirportBuildingHeightsAircraftLandingArea_44.js"></script><script src="layers/AircraftNoiseExposure_45.js"></script><script src="layers/AdvertisingNearSignalisedIntersections_46.js"></script><script src="layers/SignificantInterfaceManagement_47.js"></script><script src="layers/ResourceExtractionProtectionArea_48.js"></script><script src="layers/LimitedLandDivision_49.js"></script><script src="layers/CoastalFlooding_50.js"></script><script src="layers/CoastalAreas_51.js"></script><script src="layers/AdelaideDolphinSanctuary_52.js"></script><script src="layers/TunnelProtection_53.js"></script><script src="layers/NonstopCorridor_54.js"></script><script src="layers/KeyRailwayCrossings_55.js"></script><script src="layers/GasandLiquidPetroleumPipelines_56.js"></script><script src="layers/GasandLiquidPetroleumPipelinesFacilities_57.js"></script><script src="layers/DefenceAviationArea_58.js"></script><script src="layers/StateHeritageArea_59.js"></script><script src="layers/StateHeritagePlace_60.js"></script><script src="layers/HistoricAreaOverlay_61.js"></script><script src="layers/HazardsFloodingHigh_62.js"></script><script src="layers/WaterProtectionArea_63.js"></script><script src="layers/HazardsAcidSulfateSoils_64.js"></script><script src="layers/ActivityZones_65.js"></script><script src="layers/CapitalCityZones_66.js"></script><script src="layers/EmploymentZones_67.js"></script><script src="layers/InfrastructureZones_68.js"></script><script src="layers/NaturalResourcesandEnvironmentZones_69.js"></script><script src="layers/NeighbourhoodandCorridorZones_70.js"></script><script src="layers/RuralZones_71.js"></script><script src="layers/TourismZones_72.js"></script><script src="layers/TownshipandSettlementZones_73.js"></script><script src="layers/AirportsandAirfields_74.js"></script><script src="layers/Seaport_75.js"></script><script src="layers/HillsFaceZone_76.js"></script><script src="layers/EnvironmentandFoodProductionArea_77.js"></script><script src="layers/NorthernParkLandsGreenCorridorLink_78.js"></script><script src="layers/NorthernParkLands_79.js"></script><script src="layers/InterUrbanBreaks_80.js"></script><script src="layers/OpenSpaceNetworkGreenSpace_81.js"></script><script src="layers/OpenSpaceNetworkGreenways_82.js"></script><script src="layers/OpenSpaceNetworkGreenways2_83.js"></script><script src="layers/CharacterPreservationDistrict_84.js"></script><script src="layers/StateInnovationPlaces_85.js"></script><script src="layers/NationalEmploymentEconomicCluster_86.js"></script><script src="layers/StateSignificantIndustrialEmploymentPrecinct_87.js"></script><script src="layers/PrimeIndustrialEmploymentPrecinct_88.js"></script><script src="layers/FutureEmployment_89.js"></script><script src="layers/ExistingRailwayCorridors_90.js"></script><script src="layers/PotentialGreaterAdelaideFreightBypass_91.js"></script><script src="layers/BusRoutesPublicTransport_92.js"></script><script src="layers/ExistingMajorTransportRoutes_93.js"></script><script src="layers/TransportInvestigations_94.js"></script><script src="layers/LocalInfillInvestigationAreas_95.js"></script><script src="layers/StateSignificantInfillAreas_96.js"></script><script src="layers/FutureGreenfieldSupplyinEFPA_97.js"></script><script src="layers/FutureGreenfieldGrowthArea_98.js"></script><script src="layers/Yankalilla_99.js"></script><script src="layers/WestTorrens_100.js"></script><script src="layers/Walkerville_101.js"></script><script src="layers/VictorHarbor_102.js"></script><script src="layers/Unley_103.js"></script><script src="layers/TeaTreeGully_104.js"></script><script src="layers/Salisbury_105.js"></script><script src="layers/Prospect_106.js"></script><script src="layers/PortAdelaideEnfield_107.js"></script><script src="layers/Playford_108.js"></script><script src="layers/Onkaparinga_109.js"></script><script src="layers/NorwoodPaynehamandStPeters_110.js"></script><script src="layers/MurrayBridge_111.js"></script><script src="layers/MountBarker_112.js"></script><script src="layers/Mitcham_113.js"></script><script src="layers/Marion_114.js"></script><script src="layers/Light_115.js"></script><script src="layers/HoldfastBay_116.js"></script><script src="layers/Gawler_117.js"></script><script src="layers/CharlesSturt_118.js"></script><script src="layers/CampbelltownSA_119.js"></script><script src="layers/Burnside_120.js"></script><script src="layers/Barossa_121.js"></script><script src="layers/Alexandrina_122.js"></script><script src="layers/AdelaidePlains_123.js"></script><script src="layers/AdelaideHills_124.js"></script><script src="layers/Adelaide_125.js"></script><script src="layers/GARPLGA_126.js"></script><script src="layers/Rezone_127.js"></script><script src="layers/Zoned_128.js"></script>
+    <script src="styles/UrbanTransportRoutes_2_style.js"></script><script src="styles/FutureRoadWidening_3_style.js"></script><script src="styles/FutureLocalRoadWidening_4_style.js"></script><script src="styles/CharacterAreaOverlay_5_style.js"></script><script src="styles/AffordableHousing_6_style.js"></script><script src="styles/MajorUrbanTransportRoutes_7_style.js"></script><script src="styles/UrbanTreeCanopy_8_style.js"></script><script src="styles/TrafficGeneratingDevelopment_9_style.js"></script><script src="styles/StormwaterManagement_10_style.js"></script><script src="styles/StateSignificantNativeVegetation_11_style.js"></script><script src="styles/SignificantLandscapeProtection_12_style.js"></script><script src="styles/ScenicQuality_13_style.js"></script><script src="styles/RiverMurrayTributariesProtectionArea_14_style.js"></script><script src="styles/RiverMurrayFloodplainProtection_15_style.js"></script><script src="styles/RegulatedandSignificantTree_16_style.js"></script><script src="styles/RamsarWetlands_17_style.js"></script><script src="styles/PrescribedWellsArea_18_style.js"></script><script src="styles/PrescribedWatercourses_19_style.js"></script><script src="styles/PrescribedWaterResourcesArea_20_style.js"></script><script src="styles/PrescribedSurfaceWaterAreas_21_style.js"></script><script src="styles/NoiseandAirEmissions_22_style.js"></script><script src="styles/NativeVegetation_23_style.js"></script><script src="styles/MurrayDarlingBasin_24_style.js"></script><script src="styles/MountLoftyRangesCatchmentArea2_25_style.js"></script><script src="styles/MountLoftyRangesCatchmentArea1_26_style.js"></script><script src="styles/MarineParksRestrictedUse_27_style.js"></script><script src="styles/MarineParksManagedUse_28_style.js"></script><script src="styles/LocalHeritagePlace_29_style.js"></script><script src="styles/LimitedDwelling_30_style.js"></script><script src="styles/KeyOutbackandRuralRoutes_31_style.js"></script><script src="styles/InterfaceManagement_32_style.js"></script><script src="styles/HeritageAdjacency_33_style.js"></script><script src="styles/HazardsBushfireMediumRisk_34_style.js"></script><script src="styles/HazardsBushfireHighRisk_35_style.js"></script><script src="styles/HazardsBushfireGeneralRisk_36_style.js"></script><script src="styles/Gateway_37_style.js"></script><script src="styles/EnvironmentandFoodProductionArea_38_style.js"></script><script src="styles/DwellingExcision_39_style.js"></script><script src="styles/Design_40_style.js"></script><script src="styles/CharacterPreservationDistrict_41_style.js"></script><script src="styles/BuildingNearAirfields_42_style.js"></script><script src="styles/AirportBuildingHeightsRegulated_43_style.js"></script><script src="styles/AirportBuildingHeightsAircraftLandingArea_44_style.js"></script><script src="styles/AircraftNoiseExposure_45_style.js"></script><script src="styles/AdvertisingNearSignalisedIntersections_46_style.js"></script><script src="styles/SignificantInterfaceManagement_47_style.js"></script><script src="styles/ResourceExtractionProtectionArea_48_style.js"></script><script src="styles/LimitedLandDivision_49_style.js"></script><script src="styles/CoastalFlooding_50_style.js"></script><script src="styles/CoastalAreas_51_style.js"></script><script src="styles/AdelaideDolphinSanctuary_52_style.js"></script><script src="styles/TunnelProtection_53_style.js"></script><script src="styles/NonstopCorridor_54_style.js"></script><script src="styles/KeyRailwayCrossings_55_style.js"></script><script src="styles/GasandLiquidPetroleumPipelines_56_style.js"></script><script src="styles/GasandLiquidPetroleumPipelinesFacilities_57_style.js"></script><script src="styles/DefenceAviationArea_58_style.js"></script><script src="styles/StateHeritageArea_59_style.js"></script><script src="styles/StateHeritagePlace_60_style.js"></script><script src="styles/HistoricAreaOverlay_61_style.js"></script><script src="styles/HazardsFloodingHigh_62_style.js"></script><script src="styles/WaterProtectionArea_63_style.js"></script><script src="styles/HazardsAcidSulfateSoils_64_style.js"></script><script src="styles/ActivityZones_65_style.js"></script><script src="styles/CapitalCityZones_66_style.js"></script><script src="styles/EmploymentZones_67_style.js"></script><script src="styles/InfrastructureZones_68_style.js"></script><script src="styles/NaturalResourcesandEnvironmentZones_69_style.js"></script><script src="styles/NeighbourhoodandCorridorZones_70_style.js"></script><script src="styles/RuralZones_71_style.js"></script><script src="styles/TourismZones_72_style.js"></script><script src="styles/TownshipandSettlementZones_73_style.js"></script><script src="styles/AirportsandAirfields_74_style.js"></script><script src="styles/Seaport_75_style.js"></script><script src="styles/HillsFaceZone_76_style.js"></script><script src="styles/EnvironmentandFoodProductionArea_77_style.js"></script><script src="styles/NorthernParkLandsGreenCorridorLink_78_style.js"></script><script src="styles/NorthernParkLands_79_style.js"></script><script src="styles/InterUrbanBreaks_80_style.js"></script><script src="styles/OpenSpaceNetworkGreenSpace_81_style.js"></script><script src="styles/OpenSpaceNetworkGreenways_82_style.js"></script><script src="styles/OpenSpaceNetworkGreenways2_83_style.js"></script><script src="styles/CharacterPreservationDistrict_84_style.js"></script><script src="styles/StateInnovationPlaces_85_style.js"></script><script src="styles/NationalEmploymentEconomicCluster_86_style.js"></script><script src="styles/StateSignificantIndustrialEmploymentPrecinct_87_style.js"></script><script src="styles/PrimeIndustrialEmploymentPrecinct_88_style.js"></script><script src="styles/FutureEmployment_89_style.js"></script><script src="styles/ExistingRailwayCorridors_90_style.js"></script><script src="styles/PotentialGreaterAdelaideFreightBypass_91_style.js"></script><script src="styles/BusRoutesPublicTransport_92_style.js"></script><script src="styles/ExistingMajorTransportRoutes_93_style.js"></script><script src="styles/TransportInvestigations_94_style.js"></script><script src="styles/LocalInfillInvestigationAreas_95_style.js"></script><script src="styles/StateSignificantInfillAreas_96_style.js"></script><script src="styles/FutureGreenfieldSupplyinEFPA_97_style.js"></script><script src="styles/FutureGreenfieldGrowthArea_98_style.js"></script><script src="styles/Yankalilla_99_style.js"></script><script src="styles/WestTorrens_100_style.js"></script><script src="styles/Walkerville_101_style.js"></script><script src="styles/VictorHarbor_102_style.js"></script><script src="styles/Unley_103_style.js"></script><script src="styles/TeaTreeGully_104_style.js"></script><script src="styles/Salisbury_105_style.js"></script><script src="styles/Prospect_106_style.js"></script><script src="styles/PortAdelaideEnfield_107_style.js"></script><script src="styles/Playford_108_style.js"></script><script src="styles/Onkaparinga_109_style.js"></script><script src="styles/NorwoodPaynehamandStPeters_110_style.js"></script><script src="styles/MurrayBridge_111_style.js"></script><script src="styles/MountBarker_112_style.js"></script><script src="styles/Mitcham_113_style.js"></script><script src="styles/Marion_114_style.js"></script><script src="styles/Light_115_style.js"></script><script src="styles/HoldfastBay_116_style.js"></script><script src="styles/Gawler_117_style.js"></script><script src="styles/CharlesSturt_118_style.js"></script><script src="styles/CampbelltownSA_119_style.js"></script><script src="styles/Burnside_120_style.js"></script><script src="styles/Barossa_121_style.js"></script><script src="styles/Alexandrina_122_style.js"></script><script src="styles/AdelaidePlains_123_style.js"></script><script src="styles/AdelaideHills_124_style.js"></script><script src="styles/Adelaide_125_style.js"></script><script src="styles/GARPLGA_126_style.js"></script><script src="styles/Rezone_127_style.js"></script><script src="styles/Zoned_128_style.js"></script>
+    <script src="./layers/layers.js"></script>
+    <script src="./resources/Autolinker.min.js"></script>
+    <script src="./resources/qgis2web.js"></script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'930f4048081e6763',t:'MTc0NDc2MDAzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
 </html>
